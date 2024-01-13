@@ -5,24 +5,28 @@ requires = ["setuptools >= 61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "problem-awesome-problem" # MUST edit here to problem / repository name
+name = "problem-human-powered-aircraft" # MUST edit here to problem / repository name
 version = "0.0.1"
 dependencies = [
     "jsonschema",
     "click",
     "PyYAML",
+    "matplotlib"
+    "numpy"
+    "openpyxl"
+    "pandas"
+    "scipy"
 ] # MUST add dependencies for your program
-requires-python = ">=3.11" # SHOULD edit required python version for your program
+requires-python = ">=3.8" # SHOULD edit required python version for your program
 authors = [
-    {name = "Hoge", email = "hogehoge@email.com"},
-    {name = "Fuga", email = "fugafuga@univ.ac.jp"},
+    {name = "Nobuo Namura", email = "nobuo.namura.gp@gmail.com"},
 ] # SHOULD edit your author information
 readme = "README.md"
 license = {file = "LICENSE"}
 
 [project.urls]
-Homepage = "https://ec-comp.jpnsec.org/problems/awesome-problem" # SHOULD edit problem wab page URL in OptHub
-Repository = "https://github.com/opthub-org/problem-awesome-problem" # SHOULD edit repository URL
+Homepage = "https://ec-comp.jpnsec.org/problems/human-powered-aircraft" # SHOULD edit problem wab page URL in OptHub
+Repository = "https://github.com/opthub-org/problem-human-powered-aircraft" # SHOULD edit repository URL
 
 # 開発用の設定
 [project.optional-dependencies]

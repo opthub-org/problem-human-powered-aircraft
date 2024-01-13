@@ -8,6 +8,9 @@ import click
 import yaml
 from jsonschema import validate
 
+import pickle
+import os
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -101,7 +104,7 @@ def validate_input(input_obj: Any, schema) -> None:
 
 
 # MUST implement evaluation
-def calc_evaluation(input_obj: Any) -> Any:
+def calc_evaluation(input_obj: dict, problem: str) -> list:
     """解評価計算の本体
 
     説明を書く
@@ -121,7 +124,11 @@ def calc_evaluation(input_obj: Any) -> Any:
     Exception
         解評価の異常終了を例外発生によって表現してもよい．
     """
-    pass
+
+    x = input_obj["variable"]
+    with open(os.path.join("problem_human_powered_aircraft", "function" , problem+".pickle"), mode="rb") as f:
+        func = pickle.load(f)
+    return func(x).tolist()
 
 
 # MUST format evaluation results
@@ -154,11 +161,12 @@ def format_output(out_obj: Any) -> Mapping[str, Any]:
     Exception
         解評価の異常終了を例外発生によって表現してもよい．
     """
-    pass
+
+    return {"objective": out_obj, "constraint": None, "error": None, "info": None}
 
 
 # MUST wrap evaluation
-def evaluate(input_obj: Any) -> Mapping[str, Any]:
+def evaluate(input_obj: Any, problem: str) -> Mapping[str, Any]:
     """入力された解を評価する
 
     説明を書く
@@ -189,7 +197,7 @@ def evaluate(input_obj: Any) -> Mapping[str, Any]:
     """
 
     LOGGER.info("Calculate on input...")
-    out_obj = calc_evaluation(input_obj)
+    out_obj = calc_evaluation(input_obj, problem)
     LOGGER.debug("out_obj = %s", out_obj)
     LOGGER.info("...Calculated.")
 
@@ -221,6 +229,11 @@ def main(ctx, quiet, verbose, config) -> None:  # pylint: disable=unused-argumen
     logging.basicConfig(level=log_level)
     LOGGER.info("Log level is set to %d.", log_level)
 
+    LOGGER.info("Get problem name...")
+    problem = os.getenv("PROBLEM")
+    LOGGER.debug("problem = %s", problem)
+    LOGGER.info("...Got")
+
     LOGGER.info("Receive a Solution as a JSON string...")
     in_json = input()
     LOGGER.debug("in_json = %s", in_json)
@@ -236,7 +249,7 @@ def main(ctx, quiet, verbose, config) -> None:  # pylint: disable=unused-argumen
     LOGGER.info("...Validated")
 
     LOGGER.info("Evaluate a Solution...")
-    out_dict = evaluate(in_dict)
+    out_dict = evaluate(in_dict, problem)
     LOGGER.debug("out_dict = %s", out_dict)
     LOGGER.info("...Evaluated")
 
@@ -257,7 +270,7 @@ if __name__ == "__main__":
     try:
         LOGGER.info("Start")
         main(  # pylint: disable=no-value-for-parameter,unexpected-keyword-arg
-            auto_envvar_prefix="PROB"
+            auto_envvar_prefix="HPA"
         )
         LOGGER.info("Successfully finished")
     except Exception as e:
