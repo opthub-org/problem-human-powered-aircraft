@@ -1,0 +1,6 @@
+# MUST NOT wrtite credentials; Git tracks this file
+# MUST rename this file to `environ` (without suffix)
+
+# MUST edit problem name in kebab-case
+# e.g.: if your repository name is `problem-awesome-problem`, then `PROBLEM_NAME="awesome-problem"`
+PROBLEM_NAME="kebab-case"

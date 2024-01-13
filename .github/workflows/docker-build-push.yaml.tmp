@@ -1,0 +1,27 @@
+# MUST edit docker tag
+# MUST rename this file to `docker-build-push.yaml`
+
+name: Docker
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}  # MUST NOT edit since this is read from organization secrets
+          password: ${{ secrets.DOCKERHUB_TOKEN }}  # MUST NOT edit since this is read from organization secrets
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: <MUST edit>  # opthub/problem-awesome-problem:tag!

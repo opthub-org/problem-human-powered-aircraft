@@ -5,39 +5,44 @@ requires = ["setuptools >= 61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "problem-awesome-problem" # [要上書き] ここに問題名/リポジトリ名を書く
+name = "problem-awesome-problem" # MUST edit here to problem / repository name
 version = "0.0.1"
 dependencies = [
     "jsonschema",
     "click",
-] # [要上書き] ここに依存パッケージを追加する
-requires-python = ">=3.11" # [要上書き] ここにPythonのバージョンを書く
+    "PyYAML",
+] # MUST add dependencies for your program
+requires-python = ">=3.11" # SHOULD edit required python version for your program
 authors = [
     {name = "Hoge", email = "hogehoge@email.com"},
     {name = "Fuga", email = "fugafuga@univ.ac.jp"},
-] # [要上書き] ここに著者情報を書く
+] # SHOULD edit your author information
 readme = "README.md"
 license = {file = "LICENSE"}
 
 [project.urls]
-Homepage = "https://ec-comp.jpnsec.org/problems/awesome-problem" # [要上書き] ここにOpthubの問題ページURLを書く
-Repository = "https://github.com/opthub-org/problem-awesome-problem" # [要上書き] ここにリポジトリURLを書く
+Homepage = "https://ec-comp.jpnsec.org/problems/awesome-problem" # SHOULD edit problem wab page URL in OptHub
+Repository = "https://github.com/opthub-org/problem-awesome-problem" # SHOULD edit repository URL
 
 # 開発用の設定
 [project.optional-dependencies]
 dev = [
     "pytest",
     "pyproject-flake8",
-    "mypy",
+    "mypy >= 0.900",
     "black",
     "isort"
 ]
 
-[tools.black]
+[tool.black]
 line-length = 100
 
 [tool.isort]
 profile = "black"
 
-[tools.flake8]
+[tool.flake8]
 max-line-length = 100
+exclude = [".venv", "tests", "build"]
+
+[tool.mypy]
+exclude = [".venv", "tests", "build"]

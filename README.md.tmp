@@ -1,0 +1,23 @@
+# problem-awesome-problem <!-- MUST edit problem name -->
+## 問題の説明
+
+MUST write problem description
+
+## 入力レイアウト
+
+問題プログラムは標準入力を1行読み取り1つの解として評価する．
+入力は次のようなJSON文字列．
+
+MUST describe your input format
+
+## 出力レイアウト
+
+問題プログラムは1つの解の評価を標準出力の最後の1行に書き込む．
+MUST describe output format
+
+| キー         | 型                 | 説明                                   |
+| ------------ | ------------------ | -------------------------------------- |
+| `objective`  | `objective`の型    | 目的関数値．異常終了時は`null`．       |
+| `constraint` | `constraint`の型   | 制約値．異常終了時は`null`．           |
+| `error`      | `string` \| `null` | エラーメッセージ．正常終了時は`null`． |
+| `info`       | `info`の型         | 追加情報．異常終了時は`null`．         |

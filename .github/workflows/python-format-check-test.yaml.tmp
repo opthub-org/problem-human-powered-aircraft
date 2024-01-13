@@ -1,0 +1,43 @@
+# MUST rename this file to `python-format-check-test.yaml`
+# SHOULD set `jobs.tests.strategy.matrix.python-version` to list all versions that your program supports
+
+name: Python
+
+on: pull_request
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.11"]  # SHOULD EDIT to list all versions that your program supports
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ".[dev]"
+
+      - name: Format Files
+        run: |
+          black .
+          isort .
+
+      - name: Check Files
+        run: |
+          pflake8
+          mypy --install-types --non-interactive .
+
+      - name: Pytest
+        run: pytest

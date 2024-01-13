@@ -1,0 +1,65 @@
+# MUST edit docker image tag
+# MUST rename this file to `tox.ini`
+
+[tox]
+envlist =
+    tests
+    build
+    deploy
+    py{311}
+skip_missing_interpreters = true
+
+[gh-actions]
+python =
+    3.11: deploy, py311
+
+[testenv:tests]
+skip_install = true
+deps = -e ".[dev]"
+commands =
+	isort .
+	black .
+	pflake8
+	mypy --install-types --non-interactive .
+	pytest
+
+[testenv:build]
+skip_install = true
+whitelist_externals = docker
+passenv = PROBLEM_NAME
+<MUST edit>  # commands = docker build -t opthub/problem-${PROBLEM_NAME}:tag! .
+
+[testenv:run]
+skip_install = true
+whitelist_externals = docker
+passenv = PROBLEM_NAME
+commands =
+	<MUST edit>  # docker build -t opthub/problem-${PROBLEM_NAME}:tag! .
+	<MUST edit>  # docker run -it --rm opthub/problem-${PROBLEM_NAME}:tag!
+
+[testenv:run-bash]
+skip_install = true
+whitelist_externals = docker
+passenv = PROBLEM_NAME
+commands =
+	<MUST edit>  # docker build -t opthub/problem-${PROBLEM_NAME}:tag! .
+	<MUST edit>  # docker run -it --rm opthub/problem-${PROBLEM_NAME}:tag! /bin/bash
+
+[testenv:deploy]
+skip_install = true
+deps = -e ".[dev]"
+whitelist_externals = docker
+passenv = PROBLEM_NAME
+commands =
+	isort .
+	black .
+	pflake8
+	mypy --install-types --non-interactive .
+	pytest
+    <MUST edit>  # docker build -t opthub/problem-${PROBLEM_NAME}:tag! .
+    <MUST edit>  # docker push opthub/problem-${PROBLEM_NAME}:tag!
+
+[testenv]
+skip_install = true
+deps = -e ".[dev]"
+commands = pytest

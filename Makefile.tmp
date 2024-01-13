@@ -1,0 +1,61 @@
+# MUST edit docker image tag
+# MUST rename this file to `Makefile`
+# MUST edit `environ.tmp` file and rename it to `environ` before using make commands
+# MAY edit this file to use a shell other than bash
+
+include environ
+kebab := ${PROBLEM_NAME}
+snake := $(subst -,_,$(kebab))
+
+.PHONY: default replace install install-dev dev-env tests build deploy
+
+# 事故防止用 (何も起きない)
+default: ;
+
+# テスト->ビルド->Docker Hubにプッシュ
+deploy: tests build
+	<MUST edit>  # docker push opthub/problem-$(kebab):tag!
+
+# ビルド->bashを実行
+run-bash: build
+	<MUST edit>  # docker run -it --rm opthub/problem-$(kebab):tag! /bin/bash
+
+# ビルド->デフォルトコマンドを実行
+run: build
+	<MUST edit>  # docker run -it --rm opthub/problem-$(kebab):tag!
+
+# Dockerイメージのビルド
+build:
+	<MUST edit>  # docker build -t opthub/problem-$(kebab):tag! .
+
+# フォーマット, チェック, テスト
+tests:
+	isort .
+	black .
+	pflake8
+	mypy --install-types --non-interactive .
+	pytest
+
+# 仮想環境の作成->仮想環境内で開発用を含めた依存パッケージをインストール
+dev-env:
+	python -m venv .venv
+	echo "prompt = $(kebab)" >> .venv/pyvenv.cfg
+	source .venv/bin/activate \
+	&& make install-dev
+
+# 開発用を含めた依存パッケージをインストール
+install-dev:
+	pip install -e ".[dev]"
+
+# 依存パッケージをインストール
+install:
+	pip install "."
+
+# 問題名に合わせてディレクトリ名やファイルを編集
+replace:
+	mv problem_awesome_problem problem_$(snake)
+	sed -i -e "s/awesome-problem/$(kebab)/" pyproject.toml
+	sed -i -e "s/problem_awesome_problem/problem_$(snake)/" Dockerfile
+	sed -i -e "s/problem-awesome-problem/problem-$(kebab)/" README.md.tmp
+	sed -i -e "s/problem_awesome_problem/problem_$(snake)/" tests/test_main.py
+	sed -i -e "s/problem-awesome-problem/problem-$(kebab)/" .github/workflows/docker-build-push.yaml.tmp
