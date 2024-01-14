@@ -46,12 +46,12 @@ The benchmark includes 60 problems (20 types $\times$ 3 levels) with 1-9 objecti
 
 Build a docker image
 ```
-docker build -t opthub/problem-real-world-optimization:latest .
+docker build -t opthub/problem-human-powered-aircraft:latest .
 ```
 
 Run the image with problem name as "PROBLEM=hpa201-1" for HPA201-1
 ```
-docker run -it --rm -e PROBLEM=hpa201-1 opthub/problem-real-world-optimization:latest
+docker run -it --rm -e PROBLEM=hpa201-1 opthub/problem-human-powered-aircraft:latest
 ```
 
 
