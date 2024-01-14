@@ -60,6 +60,19 @@ def load_function(problem: str):
 
 
 def define_schema(func):
+    """Define json schema using number of design variables in each problem
+
+    Parameters
+    ----------
+    func : object
+        class defining a problem
+
+    Returns
+    -------
+    schema :
+        json schema defining input format
+    """
+    
     type_var = "array"
     len_min_var = func.nx
     len_max_var = func.nx
