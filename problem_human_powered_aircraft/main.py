@@ -40,58 +40,70 @@ def load_config(ctx, _, value) -> dict:
     return ctx.default_map
 
 
-# SHOULD implement your input validation
-# sample schema
-# type_var = "array"
-# len_min_var = 10
-# len_max_var = 10
-# type_var_item = "number"
-# val_min_var = 0
-# val_max_var = 10
-# type_add = "integer"
-# val_min_add = 0
-# val_max_add = 100
-# INPUT_JSONSCHEMA = {
-#     "$schema": "https://json-schema.org/draft/2020-12",
-#     "title": "input schema",
-#     "type": "object",
-#     "properties": {
-#         "variable": {
-#             "type": type_var,
-#             "minItems": len_min_var,
-#             "maxItems": len_max_var,
-#             "items": {
-#                 "type": type_var_item,
-#                 "minimum": val_min_var,
-#                 "maximum": val_max_var
-#             }
-#         },
-#         "add_info": {
-#             "type": type_add,
-#             "minimum": val_min_add,
-#             "maximum": val_max_add
-#         }
-#     },
-#     "additionalProperties": False,
-#     "required": ["variable", "add_info"]
-# }
-def validate_input(input_obj: Any, schema) -> None:
-    """入力された解を検証する
-
-    説明を書く
+def load_function(problem: str):
+    """Load class object defining objective functions and constraints
 
     Parameters
     ----------
-    input_obj :
-        入力されたJSON文字列をパースして得られたオブジェクト．
-
-    schema :
-        入力レイアウトを規定するJSONスキーマ．strやdictで設定できる．
+    problem : str
+        problem ID
+        e.g., 'hpa201-1'
 
     Returns
     -------
-
+    object
+        class object defining objective functions and constraints
     """
+    with open(os.path.join("problem_human_powered_aircraft", "function" , problem+".pickle"), mode="rb") as file:
+        func = pickle.load(file)
+    return func
+
+
+def define_schema(func):
+    type_var = "array"
+    len_min_var = func.nx
+    len_max_var = func.nx
+    type_var_item = "number"
+    val_min_var = 0.0
+    val_max_var = 1.0
+    INPUT_JSONSCHEMA = {
+        "$schema": "https://json-schema.org/draft/2020-12",
+        "title": "input schema",
+        "type": "object",
+        "properties": {
+            "variable": {
+                "type": type_var,
+                "minItems": len_min_var,
+                "maxItems": len_max_var,
+                "items": {
+                    "type": type_var_item,
+                    "minimum": val_min_var,
+                    "maximum": val_max_var
+                }
+            }
+        }
+    }
+
+    return INPUT_JSONSCHEMA
+
+
+def validate_input(input_obj, func) -> None:
+    """validate input format
+
+    Parameters
+    ----------
+    input_obj : dict
+        Design variables
+        e.g., {"variable": list[float]}
+
+    func : object
+        class defining a problem
+
+    Returns
+    -------
+    """
+
+    schema = define_schema(func)
 
     if not schema:
         LOGGER.warning("Empty schema. Therefore, the input will not be validated.")
@@ -103,106 +115,90 @@ def validate_input(input_obj: Any, schema) -> None:
         validate(input_obj, schema)
 
 
-# MUST implement evaluation
-def calc_evaluation(input_obj: dict, problem: str) -> list:
-    """解評価計算の本体
-
-    説明を書く
+def calc_evaluation(input_obj: dict, func):
+    """Evaluate objective functions and constraints
 
     Parameters
     ----------
-    input_obj :
-        入力されたJSON文字列をパースして得られたオブジェクト．
+    input_obj : dict
+        Design variables
+        e.g., {"variable": list[float]}
+
+    func : object
+        class defining a problem
 
     Returns
     -------
-    Any
-        解評価を表すPythonオブジェクト．
-
-    Raises
-    ------
-    Exception
-        解評価の異常終了を例外発生によって表現してもよい．
+    list[float]
+        Objective function values
+    
+    Union[list[float], None]
+        Constraint function values or None if no constraint
     """
 
-    x = input_obj["variable"]
-    with open(os.path.join("problem_human_powered_aircraft", "function" , problem+".pickle"), mode="rb") as f:
-        func = pickle.load(f)
-    return func(x).tolist()
+    try:
+        x = input_obj["variable"]
+        if func.ng > 0:
+            f, g = func(x)
+            return f.tolist(), g.tolist()
+        else:
+            return func(x).tolist(), None
+    except:
+        return None, None 
 
 
-# MUST format evaluation results
-def format_output(out_obj: Any) -> Mapping[str, Any]:
-    """計算結果の整形を行う
-
-    説明を書く
+def format_output(out_obj, out_con) -> Mapping[str, Any]:
+    """Format evaluation results
 
     Parameters
     ----------
-    out_obj:
-        計算結果を表すPythonオブジェクト．
+    out_obj: list
+        Objective function values or None if evaluation fails
+    
+    out_con: list
+        Constraint function values or None if no constraint
 
     Returns
     -------
     Mapping
-        解の評価を表すMapping (dict)．この関数が例外を発生させることなく値を返す場合，次の4つのキーを必ず持つ必要がある．
-
-        * `objective` : Optional[Union[float, list[float]]]
-            目的関数値．異常終了時はNone．
-        * `constraint`: Optional[Union[float, list[float]]]
-            制約値．異常終了時はNone．
-        * `error` : Optional[str]
-            エラーメッセージ．正常終了時はNone．
-        * `info` : Any
-            追加情報．異常終了時はNone．
-
-    Raises
-    ------
-    Exception
-        解評価の異常終了を例外発生によって表現してもよい．
+        * `objective` : list[float]
+        * `constraint`: Union[list[float], None]
+        * `error` : None
+        * `info` : None
     """
 
-    return {"objective": out_obj, "constraint": None, "error": None, "info": None}
+    return {"objective": out_obj, "constraint": out_con, "error": None, "info": None}
 
 
-# MUST wrap evaluation
-def evaluate(input_obj: Any, problem: str) -> Mapping[str, Any]:
-    """入力された解を評価する
-
-    説明を書く
+def evaluate(input_obj, func) -> Mapping[str, Any]:
+    """Evaluate and format objective functions and constraints
 
     Parameters
     ----------
-    input_obj :
-        入力されたJSON文字列をパースして得られたオブジェクト．
+    input_obj : dict
+        Design variables
+        e.g., {"variable": list[float]}
+
+    func : object
+        class defining a problem
 
     Returns
     -------
     Mapping
-        解の評価を表すMapping (dict)．この関数が例外を発生させることなく値を返す場合，次の4つのキーを必ず持つ必要がある．
-
-        * `objective` : Optional[Union[float, list[float]]]
-            目的関数値．異常終了時はNone．
-        * `constraint`: Optional[Union[float, list[float]]]
-            制約値．異常終了時はNone．
-        * `error` : Optional[str]
-            エラーメッセージ．正常終了時はNone．
-        * `info` : Any
-            追加情報．異常終了時はNone．
-
-    Raises
-    ------
-    Exception
-        解評価の異常終了を例外発生によって表現してもよい．
+        * `objective` : list[float]
+        * `constraint`: Union[list[float], None]
+        * `error` : None
+        * `info` : None
     """
 
     LOGGER.info("Calculate on input...")
-    out_obj = calc_evaluation(input_obj, problem)
+    out_obj, out_con = calc_evaluation(input_obj, func)
     LOGGER.debug("out_obj = %s", out_obj)
+    LOGGER.debug("out_con = %s", out_con)
     LOGGER.info("...Calculated.")
 
     LOGGER.info("Format output...")
-    out_formatted = format_output(out_obj)
+    out_formatted = format_output(out_obj, out_con)
     LOGGER.debug("out_formatted = %s", out_formatted)
     LOGGER.info("...Formatted.")
 
@@ -244,12 +240,17 @@ def main(ctx, quiet, verbose, config) -> None:  # pylint: disable=unused-argumen
     LOGGER.debug("in_dict = %s", in_dict)
     LOGGER.info("...Parsed")
 
+    LOGGER.info("Load function...")
+    func = load_function(problem)
+    LOGGER.debug("func = %s", func)
+    LOGGER.info("...Loaded")
+
     LOGGER.info("Validate a Solution...")
-    validate_input(in_dict, {})  # SHOULD validate the input
+    validate_input(in_dict, func)
     LOGGER.info("...Validated")
 
     LOGGER.info("Evaluate a Solution...")
-    out_dict = evaluate(in_dict, problem)
+    out_dict = evaluate(in_dict, func)
     LOGGER.debug("out_dict = %s", out_dict)
     LOGGER.info("...Evaluated")
 

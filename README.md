@@ -1,307 +1,78 @@
-# problem-template-python
-## これは何？
+# problem-human-powered-aircraft
+## Benchmark Problem Definition
+The benchmark problems are formulated as single or multi-objective minimization problems in the normalized design space:
 
-[OptHub](https://ec-comp.jpnsec.org/)でコンペティションを開催する際に，出題者が問題を作成するためのテンプレートです．Pythonで問題プログラムを実装したい場合にこのテンプレートを使用してください．もし他の言語で問題を実装したい場合には，その言語用のテンプレートを使用してください．
+$$
+\begin{align*}
+& \text{minimize}   & \quad & {\mathbf F({\mathbf x}_l)} = (f_1({\mathbf x}_l), \cdots, f_M({\mathbf x}_l)) \\
+& \text{subject to} & \quad & {\mathbf G({\mathbf x}_l)} = (g_1({\mathbf x}_l), \cdots, g_N({\mathbf x}_l)) \leq 0 \\
+&                   & \quad & {\mathbf x}_l \in [0, 1]^{D_l} \\
+\end{align*}
+$$
 
-## タスク一覧
+We classify problems as HPA $MNL$ − $l$, where $M$ is the number of objectives, $N$ is the number of constraints (excluding box constraints), $L$ is the problem index, and $l \in$ {0,1,2} is the difficulty level, which may be omitted if irrelevant. Higher $l$ indicates greater design variable freedom. 
 
-出題者が問題プログラムを実装するにあたって行うことが想定されるタスク一覧です．
-学習コストや作業コスト，タスク自体の必要性を鑑み，各タスクに参考として次のような優先度が設けてあります．
+The benchmark includes 60 problems (20 types $\times$ 3 levels) with 1-9 objectives. Original constrained problems (HPA \* $N$ \*) can also be used as unconstrained problems (HPA \* 0 \*) by means of a pre-implemented penalty method. The following table summarizes the design variable dimension $D_l$ at $n=4$ for each problem and difficulty level. Further details are in the original paper.
 
-* 高 (しなければならない; MUST / MUST NOT)
-    * コンペティションシステム上で動作するために必要なタスクです．
-* 中 (するべき; SHOULD / SHOULD NOT)
-    * 基本的に行うべきですが，動作には必要ではないタスクです．
-* 低 (するとよい; MAY / MAY NOT)
-    * 行うことで開発や動作検証をしやすくできますが，動作には必要ではないタスクです．学習/作業コストが大きいと判断される場合は，タスクを省略しても構いません．優先度「低」のタスクは，テンプレートの変更すべき箇所に`MAY`または`MAY NOT`とコメントされています。
+<p align="center">
 
-| タスク                                                                     | 優先度 | 関連するツール/サービスの例 |
-| :------------------------------------------------------------------------- | :----: | :-------------------------- |
-| [プロジェクトのセットアップ](#プロジェクトのセットアップ)                  |   高   |                             |
-| [解評価の実装](#解評価の実装)                                              |   高   |                             |
-| [Dockerイメージ化](#dockerイメージ化)                                      |   高   | Docker, Docker Hub          |
-| [READMEの作成](#readmeの作成)                                              |   中   |                             |
-| [入力の検証](#入力の検証)                                                  |   中   | JSON Schema                 |
-| [テストコードの作成](#テストコードの作成)                                  |   中   | unittest, pytest            |
-| [リンターやフォーマッタ](#リンターやフォーマッタ)                          |   低   | flak8, mypy, black, isort   |
-| [型ヒント](#型ヒント)                                                      |   低   |                             |
-| [ロギング](#ロギング)                                                      |   低   |                             |
-| [テスト/ビルドツール](#テストビルドツール)                                 |   低   | make, tox                   |
-| [CI/CD](#cicd)                                                             |   低   | Github Actions              |
-| [高度なパッケージ/仮想環境管理ツール](#高度なパッケージ仮想環境管理ツール) |   低   | Pipenv, Poetry, Rye         |
+| Problem      | $D_0$ | $D_1$ | $D_2$ |
+|--------------|-------|-------|-------|
+| HPA131, 101  | 17    | 32    | 108   |
+| HPA142, 102  | 16    | 31    | 187   |
+| HPA143, 103  | 18    | 33    | 189   |
+| HPA241, 201  | 18    | 33    | 109   |
+| HPA222, 202  | 16    | 31    | 187   |
+| HPA233, 203  | 19    | 34    | 190   |
+| HPA244, 204  | 18    | 33    | 189   |
+| HPA245, 205  | 18    | 33    | 189   |
+| HPA341, 301  | 18    | 33    | 109   |
+| HPA322, 302  | 16    | 31    | 187   |
+| HP333, A303  | 19    | 34    | 190   |
+| HPA344, 304  | 18    | 33    | 189   |
+| HPA345, 305  | 18    | 33    | 189   |
+| HPA441, 401  | 18    | 33    | 189   |
+| HPA422, 402  | 16    | 31    | 187   |
+| HPA443, 403  | 18    | 33    | 189   |
+| HPA541, 501  | 18    | 33    | 189   |
+| HPA542, 502  | 19    | 34    | 190   |
+| HPA641, 601  | 18    | 33    | 189   |
+| HPA941, 901  | 19    | 34    | 190   |
+
+</p>
 
 
-## 各タスク詳細
+## Build&Run
 
-### プロジェクトのセットアップ
-
-プロジェクトを適切にセットアップします．
-
-このタスクは次のような複数のサブタスクからなります．
-
-1. ディレクトリのリネーム
-1. [`pyproject.toml`](./pyproject.toml)の編集
-1. [ライセンス](./LICENSE.tmp)の設定およびリネーム
-
-**ディレクトリのリネーム**  
-ディレクトリ`problem_awesome_problem`を適切な名前に変更してください．
-例えば，問題名が`problem-real-world-optimization`の場合，ディレクトリ名はスネークケースで`problem_real_world_optimization`としてください．
-
-**[`pyproject.toml`](./pyproject.toml)の編集**  
-このテンプレートでは，[`pyproject.toml`](./pyproject.toml)にプロジェクトのメタデータの一例が入力されています．
-ファイルを編集し，問題名や依存パッケージ，著者情報などを適切に入力してください．
-
-次のようなコマンドで[`pyproject.toml`](./pyproject.toml)から本番および開発用の依存パッケージをインストールできます．
-```bash
-pip install -e ".[dev]"
+Build a docker image
 ```
-
-もちろん，状況に応じて伝統的な`requirements.txt`などによる管理や，[高度なパッケージ/仮想環境管理ツール](#高度なパッケージ/仮想環境管理ツール)を採用しても構いません．
-
-**[ライセンス](./LICENSE.tmp)の設定およびリネーム**  
-このテンプレートでは，仮のライセンス情報ファイルとして[`LICENSE.tmp`](./LICENSE.tmp)が設置されています．
-状況に応じたライセンスを選択/作成したら，[`LICENSE.tmp`](./LICENSE.tmp)に書き込み，`LICENSE.tmp`から`LICENSE`にリネームしてください．
-
-### 解評価の実装
-
-入力されたJSON文字列をパースして得られたオブジェクトを，解として評価します．
-
-関数`evaluate`，`calc_evaluation`および`format_output`を編集してください．
-関数`evaluate`は関数`calc_evaluation`, `format_output`を結合したラッパー関数であり，関数`calc_evaluation`は解評価計算を行う関数，関数`format_output`は関数`calc_evaluation`の計算結果を規定の出力フォーマットや，仕様の範囲内に整形する関数です．
-関数`evaluate`が例外を発生させることなく終了する場合，次の4つのキーを持つ`Mapping[str, Any]` (基本的に`dict`) を返す必要があります．
-
-| キー         | 型                                    | 説明                                   |
-| ------------ | ------------------------------------- | -------------------------------------- |
-| `objective`  | `Optional[Union[float, List[float]]]` | 目的関数値．異常終了時は`None`．       |
-| `constraint` | `Optional[Union[float, List[float]]]` | 制約値．異常終了時は`None`．           |
-| `error`      | `Optional[str]`                       | エラーメッセージ．正常終了時は`None`． |
-| `info`       | `Any`                                 | 追加情報．異常終了時は`None`．         |
-
-また，解評価の異常終了を例外の発生として実装することも可能です．
-その場合，上の表のような返り値を設定する必要はありませんが，適切な例外クラスを使用し，問題解決のヒントとなるようなエラーメッセージを設定することを推奨します．
-
-さらに，解評価についてのオプション値などをコマンドライン引数や環境変数から受け取る場合，関数`main`を編集する必要があります．
-関数`main`はあらかじめ`click`パッケージによってロギングレベルなどを取得可能な設計となっているため，同様にパラメータオプションを設定するのが最も手軽かもしれません．
-
-### Dockerイメージ化
-
-問題プログラムを[Docker](https://docs.docker.com/)イメージとしてビルドし，[Docker Hub](https://hub.docker.com/)にデプロイします．
-
-まず，[リファレンス](https://docs.docker.com/engine/reference/builder/#dockerfile-reference)や[ガイド](https://docs.docker.com/get-started/09_image_best/#image-building-best-practices)等を参考に[`Dockerfile`](./Dockerfile)を適切に編集してください．この作業には，ベースイメージの設定，Python以外の依存ライブラリ等のインストール，実行コマンドの変更が含まれます．
-
-次に，[マニュアル](https://docs.docker.com/get-docker/)等を参考に，手元のマシンにDockerをインストールしてください．
-インストール方法によっては，下記のコマンド群をroot権限で実行する必要があるかもしれません．
-
-次に，Docker Hub上のOrganizationである[opthub](https://hub.docker.com/orgs/opthub/repositories)に加入済みのDocker Hubアカウントにログインするか，新たにDocker Hubアカウントを作成し，opthubに参加した上でログインしてください．次のようなコマンドを実行することで，Dockerクライアント上でのDocker Hubへログインできます．([参考](https://docs.docker.com/engine/reference/commandline/login/))
-```bash
-docekr login
-```
-
-次に，編集した[`Dockerfile`](./Dockerfile)をもとに，Dockerイメージをビルドします．例えば問題名が`problem-real-world-optimization`の場合は，[`Dockerfile`](./Dockerfile)と同じ階層で次のようなコマンドを実行することでイメージのビルドを開始できます．([参考](https://docs.docker.com/engine/reference/commandline/build/))
-```bash
 docker build -t opthub/problem-real-world-optimization:latest .
 ```
 
-最後に，ビルドしたイメージをDocker Hubにデプロイします．例えば，次のようなコマンドで実行可能です．([参考](https://docs.docker.com/engine/reference/commandline/push/))
-```bash
-docker push opthub/problem-real-world-optimization:latest
+Run the image with problem name as "PROBLEM=hpa201-1" for HPA201-1
+```
+docker run -it --rm -e PROBLEM=hpa201-1 opthub/problem-real-world-optimization:latest
 ```
 
-また，例えばパラメータ`some_param`の値を`y`に環境変数で設定する場合，次のようなコマンドでローカルでイメージをコンテナとして実行できます．([参考](https://docs.docker.com/engine/reference/commandline/run/))
-```bash
-docker run -it --rm -e PROB_SOME_PARAM=y opthub/problem-real-world-optimization:latest
+
+## Input
+The program reads one line of standard input and evaluates it as a single solution. The input is a JSON string as follows. "variable" is a list expressing ${\mathbf x}_l \in [0, 1]^{D_l}$
+
+```
+{"variable": [0.8,0.7,0.7,0.4,0.6,0.6,0.5,0.3,0,0,1,1,1,1,1,1,1,1,0.9,0.9,0.9,0.9,0.6,0.6,0.6,0.6,1,1,0.2,0.2,0.8,0.8,0.8]}
 ```
 
-さらに，ビルドからデプロイまでを自動化することによって，作業の効率化や人為的ミスの防止を図れます．
-詳しくは[こちら](#CICD)を参照してください．
 
-### READMEの作成
+## Outut
+The program writes the evaluation of one solution in the last line of the standard output
 
-`README`を作成し，ユーザに問題プログラムの利用方法について説明します．
 
-このテンプレートでは，仮の`README`として[`README.md.tmp`](README.md.tmp)が設置されています．
-[`README.md.tmp`](README.md.tmp)を編集し，適切な情報を入力して，`README.md.tmp`から`README.md`にリネームしてください．
+| key          | type                    | description                                          |
+| ------------ | ----------------------- | ---------------------------------------------------- |
+| `objective`  | `list[float]`           | objective function values. `null` if error.          |
+| `constraint` | `list[float]` \| `null` | constraint function values. `null` if no constraint. |
+| `error`      | `null`                  | not used.                                            |
+| `info`       | `null`                  | not used.                                            |
 
-### 入力の検証
-
-入力されたJSON文字列をパースして得られたオブジェクトを，[JSON Schema](https://json-schema.org/)で検証します．
-
-関数`validate_input`で検証が実行されますが，基本的に関数を編集する必要はありません．
-主な実装方法は，入力レイアウトを規定するJSONスキーマを`dict`や`str`で作成し，関数`validate_input`の第2引数として渡すことです．
-```diff
-+schema = ... # JSONスキーマを作成する
- LOGGER.info("Validate a Solution...")
--validate_input(in_dict, {})  # [優先度: 中] ここで入力の検証を行う
-+validate_input(in_dict, schema)
- LOGGER.info("...Validated")
-```
-JSONスキーマの作成方法は[こちら](https://json-schema.org/understanding-json-schema/basics)などを参照してください．
-
-#### 検証のガイドライン
-
-検証の原則はシンプルです．
-
-- 探索空間内の解をすべて受け入れます（実行可能解だけでなく，実行不可能解も受け入れます）．
-- それ以外は何も受け入れてはいけません．
-
-問題がどんな解を受け入れるかは検証によって決まります．
-言い換えれば，検証とは数学的な探索空間（目的関数と制約関数の定義域）を計算機上で実装したものです．
-
-コンペティションの参加者は，検証をパスする解を「ルール上認められた合法手」とみなし，許容範囲ギリギリまで探索しようとします．
-どんな解が検証をパスするかによって，コンペティションの結果も左右されます．
-作問者は，参加者の創意工夫を妨げないように，数学的に許容される解はできるかぎりすべて検証をパスするように実装してください．
-
-一方で，想定外の解を受け入れないことも重要です．
-Web APIの性質上，参加者はどんなデータでも送ることができます（文字通り，あらゆるビット列を送信できます）．
-問題プログラムを不正な入力から守るために，データ型のチェックはもちろん，余分なプロパティを含んだり不足するプロパティがある場合には拒否し，変数の最大値と最小値や配列の長さも必要十分な範囲に制限してください．
-制限が甘いと，1TBのデータを読み込んでサーバーがダウンしたり，1000桁の数値を読み込んでオーバーフローした評価値を返してしまい，競技の中断ややり直しを招く可能性があります．
-
-もちろん現実には，JSON Schemaの表現力には限界があり，数学的な探索空間を忠実に実装できるとは限りません．
-しかし，ここでできるかぎり理想を目指しておくのがトータルで見れば最も安上がりです．
-検証がしっかりしていると，問題プログラムの中では値のチェックを簡単に済ませることができ，競技中のトラブルが減ります．
-### テストコードの作成
-
-実装した各種関数を検証するテストコードを作成します．
-
-このテンプレートでは，[tests](./tests/)ディレクトリ以下に仮のテストコードが設置されています．
-テストコードを適切に編集してください．
-また，仮のテストコードでは`pytest`パッケージが用いられていますが，状況に応じて`unittest`などの異なるパッケージを選択しても構いません．
-
-#### 数値計算のテストについてのガイドライン
-
-ここでは，典型的なコーナーケースとそのテスト方法について説明します．
-
-数値計算には浮動小数点数のコーナーケースにまつわる落とし穴が大量にあります．
-コンペティションではスコアを最大化/最小化するためにギリギリを攻めることになるので，そういったコーナーケースを踏みやすいです．
-そのため，普段は問題なく動作していたプログラムが，競技本番中に予期しない動作を起こすことがしばしばあります．
-
-**基本的な考え方**
-* (悪意のある) 攻撃者の視点に立って，プログラムを壊す/穴を突く方法を考える．
-* 正常値と異常値の境界を探し，境界ギリギリの内側/外側の値をテストする．
-* エラーが出力されるケースを探し，エラー出力が別の問題を引き起こさないか確認する．
-
-**重要度：テストすべきこと**
-1. 高：入出力に`NaN`を含むケース
-1. 高：入出力に`null`を含むケース (nullableな場合)
-1. 高：入出力に`+inf`や`-inf`を含むケース
-1. 高：エラーコード代わりに特別な数を返すケース (特に`0`, `-1`, `+inf`, `-inf`, `NaN`に注意)
-1. 中：`+0.0`と`-0.0`を区別しなければならないケース
-1. 中：非決定計算による結果の変動（マルチスレッド，GPU，分散処理）
-1. 低：とても大きな数ととても小さな数の演算 (丸め誤差)
-1. 低：`abs(f(x) - f(x + dx)) < eps`になっているか (連続関数の場合)
-
-このテンプレートでは，重要度が[高]のものついてのみ[`test_main.py`](./tests/test_main.py)と[`conftest.py`](./tests/conftest.py)に仮のテストコードが実装されています．
-状況に応じて入力値や出力値，特定の値に対する対応について仕様を検討し，[`test_main.py`](./tests/test_main.py)と[`conftest.py`](./tests/conftest.py)を適切に編集してください．
-
-**1-3のテストケースについてのヒント**
-* `valid_input`
-    * 入力の仕様の範囲として入るかどうかを検討する．
-    * 仕様外なら，スキーマを適切に設定する．
-        * テストで`ValidationError`の発生を検証する．
-* `calc_evaluation`
-    * 入力の仕様外の場合は，`valid_input`をテストで検証する．
-    * 仕様の範囲の場合は，どの値に相当するか等の仕様を検討する．
-        * 同等の計算結果が得られるか等をテストで検証する．
-* `format_output`
-    * 計算エラー扱いかどうかを検討する．
-        * エラーの場合，[規定の出力レイアウト](#解評価の実装)または，例外スロー．
-        * エラーについてテストで検証する．
-    * どの値に相当するか等の仕様を検討する．
-        * [注意] 計算エラーではなく，正常終了扱いの場合は，必ず有限の (倍精度浮動小数程度の範囲の) 値に対応付ける． 
-        * 例えば，`inf`->`sys.float_info.max`など．
-        * 値についてテストで検証する．
-    
-
-### リンターやフォーマッタ
-
-リンターやフォーマッタを導入し，プログラムの文法やスタイルの問題を検証・修正しやすくします．
-
-一般的に，テストはプログラムの実行時の動作を検証するプログラムやコードを指すのに対し，リンターはコードの文法等の静的な問題を検証するプログラムを指します．
-また，フォーマッタは一定のスタイルに基づいてコードを自動的に整形することで，問題を修正するプログラムを指します．
-これらのようなリンターやフォーマッタは，プログラムの開発において必ずしも必要ではありませんが，便利です．
-
-このテンプレートでは，あらかじめ開発用の依存パッケージとして，いくつかのツールとその設定値が[`pyproject.toml`](./pyproject.toml)に登録されています．
-必要に応じて，開発用の依存パッケージや設定値を編集してください．
-
-### 型ヒント
-
-コードに型ヒントを導入し，静的に解析できる情報を増やします．
-
-Pythonは動的型付け言語であるため，変数や関数の型を指定することなく，動作可能です．
-しかし，静的型付け言語のように変数や関数に型ヒントを付けることによって，[リンターやフォーマッタ](#リンターやフォーマッタ)，エディタなどのツールが静的に解析できる情報の増加に伴う利便性の向上に加え，コード自体の可読性の向上も期待できます．
-
-詳しくは[こちら](https://docs.python.org/ja/3/library/typing.html)等を参照してください．
-
-### ロギング
-
-ログに実行時情報を記録し，追跡しやすくします．
-
-このテンプレートでは，[`main.py`](./problem_awesome_problem/main.py)でログが取られています．
-```python:main.py
-LOGGER = logging.getLogger(__name__)
-```
-ロギングについて詳しくは[こちら](https://docs.python.org/ja/3/howto/logging.html)等を参照してください．
-
-### テスト/ビルドツール
-
-プログラムのテストやビルドに関するツールを導入し，開発時のタスクを実行しやすくします．
-
-プログラムのテストやビルド，デプロイ等の開発タスクは通常複数のコマンド等を複合して達成されます．
-開発タスクごとに複数のコマンド等をひとまとめに実行ができるツールを導入することで，開発の効率化やミスの防止が期待できます．
-
-このテンプレートでは，あらかじめ`GNU make`や`tox`用の仮の設定ファイルとして，[`Makefile.tmp`](./Makefile.tmp)や[`tox.ini.tmp`](./tox.ini.tmp)が用意されています．
-状況に応じて，[`Makefile.tmp`](./Makefile.tmp)や[`tox.ini.tmp`](./tox.ini.tmp)を編集し，適切な値に設定した上で，`Makefile`や`tox.ini`にリネームしてください．
-
-**ツール使用例**
-
-`GNU make`の場合は，
-```bash
-make
-```
-または
-```bash
-make <target_name>
-```
-などがあります．
-
-`tox`の場合は
-```bash
-tox
-```
-または
-```bash
-tox -e <env_name>
-```
-などがあります．
-
-また，テンプレートの`Makefile`や`tox.ini`を使用する場合，次のような注意点があります:
-
-**`Makefile`**: 
-基本的にLinuxでの使用が想定されており，少なくとも`bash`のコマンドと`sed` (`GNU sed`) が実行可能な必要があります．
-[`environ.tmp`](./environ.tmp)を編集し，適切な値に設定した上で，`environ.tmp`から`environ`にリネームしてから使用してください．
-
-**`tox.ini`**: 
-Pythonが動作する環境であれば動作します．そのため，Windowsの場合はこちらの方が手軽かもしれません．
-環境変数`PROBLEM_NAME`を適切な値に設定してから使用してください．
-
-### CI/CD
-
-各種の開発タスクを自動化します．
-
-CI/CDと呼ばれる種類のツールやサービスを利用することで，テスト，ビルド，デプロイといった開発タスクを特定のタイミングをトリガーとして自動化することが可能です．
-このテンプレートでは，[`Github Actions`](https://docs.github.com/ja/actions/learn-github-actions/understanding-github-actions)用の仮の設定ファイルとして，[`python-format-check-test.yaml.tmp`](./.github/workflows/python-format-check-test.yaml.tmp)や[`docker-build-push.yaml.tmp`](./.github/workflows/docker-build-push.yaml.tmp)が用意されています．
-[`python-format-check-test.yaml.tmp`](./.github/workflows/python-format-check-test.yaml.tmp)や[`docker-build-push.yaml.tmp`](./.github/workflows/docker-build-push.yaml.tmp)を適切に編集し，それぞれ`python-format-check-test.yaml`と`docker-build-push.yaml`にリネームしてください．
-
-また，状況に応じて異なるワークフローを設定したり，異なるサービスを選択することを検討してください．
-
-### 高度なパッケージ/仮想環境管理ツール
-
-より高度なパッケージや仮想環境の管理を実現します．
-
-近年，依存パッケージのバージョンや，仮想環境，Pythonインタプリタなどの高度な管理を実現し，バージョンの固定や切り替えなどを自動化するツールが人気です．
-このテンプレートでは，これらを利用するための準備はされていません．
-状況に応じて，導入を検討してください．
-
-<!--
-過去の問題での課題を鑑みると，本当はパッケージのバージョンをハッシュで管理できるツールぐらいは導入してもいい気がする．
--->
+## License
+This project is under the BSD 3-Clause Clear License. See [LICENSE](LICENSE) for details.
