@@ -87,7 +87,7 @@ def define_schema(func):
     return INPUT_JSONSCHEMA
 
 
-def validate_input(input_obj, func) -> None:
+def validate_input(input_obj, schema) -> None:
     """validate input format
 
     Parameters
@@ -96,14 +96,12 @@ def validate_input(input_obj, func) -> None:
         Design variables
         e.g., {"variable": list[float]}
 
-    func : object
-        class defining a problem
+    schema :
+        json schema defining input format
 
     Returns
     -------
     """
-
-    schema = define_schema(func)
 
     if not schema:
         LOGGER.warning("Empty schema. Therefore, the input will not be validated.")
@@ -245,8 +243,13 @@ def main(ctx, quiet, verbose, config) -> None:  # pylint: disable=unused-argumen
     LOGGER.debug("func = %s", func)
     LOGGER.info("...Loaded")
 
+    LOGGER.info("Define schema...")
+    schema = define_schema(func)
+    LOGGER.debug("schema = %s", schema)
+    LOGGER.info("...Defined")
+
     LOGGER.info("Validate a Solution...")
-    validate_input(in_dict, func)
+    validate_input(in_dict, schema)
     LOGGER.info("...Validated")
 
     LOGGER.info("Evaluate a Solution...")
